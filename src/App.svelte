@@ -14,8 +14,15 @@
     id: null
   };
   
-  function onDelete(id){
-    return id;
+  function onDelete(){
+    let id= this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.id;
+    console.log(id);
+    if (confirm("Etes vous cerrtains de vouloir supprimer ce livre ?")){
+      DB.get(id).then(function(doc){
+        document.getElementById(id).remove();
+        return db.remove(doc);
+      })
+    }
   }
 
   function modify(id){
@@ -23,6 +30,7 @@
   }
 
   function addBook(){
+    
     let titre = document.getElementById("titre").value;
     let id = titre;
     let author = document.getElementById("auteur").value;
@@ -32,9 +40,43 @@
 
     if (document.getElementbyId("image").files && document.getElementById("image").files[0]){
       var fr = new FileReader();
-    
+      fr.addEventListener("load", function(e){
+        img=e.target.result.split(',')[1];
+        DB.post({
+          title : titre,
+          id: id,
+          author: author,
+          price: price,
+          url: url,
+          img: {data: img}
+        }).then(function(response){
+            console.log("livre ajouté : "+ response);
+        }).catch(function(err){
+          console.log("Erreur lors de l'ajout du livre");
+        });
+      
+      let cardwrapper = document.getElementById("card-wrapper");
+      let newcard = `
+      <paper-card heading={book.title}>
+	      <img src="data:image/png;base64, {book.img.data}" alt="{book.title}" title="{book.title}"> 	
+        <div class="card-content">
+          Ecrit par {book.author} et vendu à seulement {book.price}€.
+        </div>
+        <div>
+          <button on:click={modify}>Modifier</button>
+          <button on:click={book => onDelete(book)}>Supprimer</button>
+        </div>
+      </paper-card>
+      `;
+      cardwrapper.insertAdjacentHTML("beforeend", newcard);
+      });
+      fr.readAsDataURL(document.getElementById('addImage').files[0]);
+    }
+    else{
+      M.toast({html: "Remplissez tous les champs."});
     }
   }
+  
 
   function show_form(){
      //$form_show();
